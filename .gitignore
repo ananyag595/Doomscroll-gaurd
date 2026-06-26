@@ -1,0 +1,30 @@
+*.iml
+.gradle
+/local.properties
+.idea/
+.DS_Store
+/build
+app/build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.kiro/
+.kotlin/
+*.logcat
+*.apk
+*.aar
+captures/
+.navigation/
+
+# Signing keys — never commit keystores or signing config
+*.jks
+*.keystore
+keystore.properties
+
+# Dev tooling scripts — local convenience only
+scripts/
+
+# Generated / OS noise
+Thumbs.db
+ehthumbs.db

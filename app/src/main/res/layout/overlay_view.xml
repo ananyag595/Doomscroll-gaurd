@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Full-screen overlay shown when the session limit is reached.
+
+    Two display modes are driven by OverlayManager at runtime:
+      • First appearance  — reason_section is VISIBLE, final_mode_container is GONE
+      • Final appearance  — reason_section is GONE,    final_mode_container is VISIBLE
+
+    The root FrameLayout intentionally has no OnClickListener — the overlay is
+    not dismissible by tapping the background (Requirement 4.5).
+-->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlay_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F2000000"
+    android:fitsSystemWindows="true">
+
+    <!-- Scrollable content container so the overlay works on small screens -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:padding="24dp">
+
+            <!-- ── Elapsed time ── -->
+            <TextView
+                android:id="@+id/tv_elapsed_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="48dp"
+                android:text="00:00"
+                android:textColor="#FFFFFF"
+                android:textSize="56sp"
+                android:fontFamily="sans-serif-light"
+                android:letterSpacing="0.05"
+                android:contentDescription="Elapsed session time" />
+
+            <!-- ── Contextual message ── -->
+            <TextView
+                android:id="@+id/tv_contextual_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="You've been scrolling for a while."
+                android:textColor="#CCFFFFFF"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.3" />
+
+            <!-- ════════════════════════════════════════════════════════════
+                 FIRST-APPEARANCE MODE — reason selection
+                 Visibility toggled by OverlayManager (VISIBLE / GONE)
+                 ════════════════════════════════════════════════════════════ -->
+            <LinearLayout
+                android:id="@+id/reason_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="32dp"
+                android:visibility="visible">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Why are you here?"
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Reason: Messaging someone -->
+                <Button
+                    android:id="@+id/btn_reason_messaging"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Messaging someone"
+                    android:textColor="#FFFFFF"
+                    android:background="#33FFFFFF" />
+
+                <!-- Reason: Work-related -->
+                <Button
+                    android:id="@+id/btn_reason_work"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Work-related"
+                    android:textColor="#FFFFFF"
+                    android:background="#33FFFFFF" />
+
+                <!-- Reason: Just scrolling -->
+                <Button
+                    android:id="@+id/btn_reason_just_scrolling"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Just scrolling"
+                    android:textColor="#FFCC00"
+                    android:background="#33FFCC00" />
+
+                <!-- Reason: Other -->
+                <Button
+                    android:id="@+id/btn_reason_other"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Other"
+                    android:textColor="#FFFFFF"
+                    android:background="#33FFFFFF" />
+
+            </LinearLayout>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 FINAL-APPEARANCE MODE — shown after extension is consumed
+                 Visibility toggled by OverlayManager (VISIBLE / GONE)
+                 ════════════════════════════════════════════════════════════ -->
+            <LinearLayout
+                android:id="@+id/final_mode_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="32dp"
+                android:gravity="center"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Time to switch to something else."
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="16sp"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp" />
+
+            </LinearLayout>
+
+            <!-- ── Redirect grid (populated dynamically by OverlayManager) ── -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Open instead:"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:gravity="center"
+                android:layout_marginBottom="12dp" />
+
+            <GridLayout
+                android:id="@+id/redirect_grid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="3"
+                android:rowCount="2"
+                android:layout_marginBottom="48dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</FrameLayout>
