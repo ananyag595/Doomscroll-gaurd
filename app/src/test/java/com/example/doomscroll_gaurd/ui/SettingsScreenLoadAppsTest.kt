@@ -48,7 +48,7 @@ class SettingsScreenLoadAppsTest {
      */
     @Test
     fun nullIntentShouldBeExcluded() {
-        val result = shouldIncludeApp(launchIntent = null, flags = 0)
+        val result = shouldIncludeApp(launchIntent = null, flags = 0, packageName = "com.example.app")
 
         assertFalse(
             "shouldIncludeApp(null, 0) must return false — apps without a launch intent " +
@@ -69,7 +69,7 @@ class SettingsScreenLoadAppsTest {
     @Test
     fun systemAppShouldBeExcluded() {
         val launchIntent = Intent(Intent.ACTION_MAIN)
-        val result = shouldIncludeApp(launchIntent = launchIntent, flags = ApplicationInfo.FLAG_SYSTEM)
+        val result = shouldIncludeApp(launchIntent = launchIntent, flags = ApplicationInfo.FLAG_SYSTEM, packageName = "com.example.app")
 
         assertFalse(
             "shouldIncludeApp(Intent(ACTION_MAIN), FLAG_SYSTEM) must return false — " +
@@ -93,6 +93,7 @@ class SettingsScreenLoadAppsTest {
         val result = shouldIncludeApp(
             launchIntent = launchIntent,
             flags = ApplicationInfo.FLAG_UPDATED_SYSTEM_APP,
+            packageName = "com.example.app",
         )
 
         assertFalse(
@@ -113,7 +114,7 @@ class SettingsScreenLoadAppsTest {
      */
     @Test
     fun nullIntentWithSystemFlagShouldBeExcluded() {
-        val result = shouldIncludeApp(launchIntent = null, flags = ApplicationInfo.FLAG_SYSTEM)
+        val result = shouldIncludeApp(launchIntent = null, flags = ApplicationInfo.FLAG_SYSTEM, packageName = "com.example.app")
 
         assertFalse(
             "shouldIncludeApp(null, FLAG_SYSTEM) must return false — " +
@@ -136,13 +137,101 @@ class SettingsScreenLoadAppsTest {
     @Test
     fun userInstalledLaunchableAppShouldBeIncluded() {
         val launchIntent = Intent(Intent.ACTION_MAIN)
-        val result = shouldIncludeApp(launchIntent = launchIntent, flags = 0)
+        val result = shouldIncludeApp(launchIntent = launchIntent, flags = 0, packageName = "com.example.app")
 
         assertTrue(
             "shouldIncludeApp(Intent(ACTION_MAIN), 0) must return true — " +
                 "a user-installed launchable app must appear in the redirect-app list.",
             result,
         )
+    }
+
+    // -------------------------------------------------------------------------
+    // Instagram exclusion tests — Validates: Requirements 1.1, 1.2
+    // -------------------------------------------------------------------------
+
+    /**
+     * Instagram with a valid launch intent and no system flags must be EXCLUDED.
+     *
+     * Validates: Requirements 1.1, 1.2
+     */
+    @Test
+    fun instagramWithValidIntentShouldBeExcluded() {
+        val result = shouldIncludeApp(
+            launchIntent = Intent(Intent.ACTION_MAIN),
+            flags = 0,
+            packageName = "com.instagram.android",
+        )
+        assertFalse("Instagram must be excluded even when it has a valid launch intent", result)
+    }
+
+    /**
+     * Instagram with a null intent must be EXCLUDED (belt-and-suspenders).
+     *
+     * Validates: Requirements 1.1, 1.2
+     */
+    @Test
+    fun instagramWithNullIntentShouldBeExcluded() {
+        val result = shouldIncludeApp(
+            launchIntent = null,
+            flags = 0,
+            packageName = "com.instagram.android",
+        )
+        assertFalse("Instagram must be excluded when intent is null", result)
+    }
+
+    /**
+     * Instagram with FLAG_SYSTEM must be EXCLUDED (all three guards fire, Instagram guard is last).
+     *
+     * Validates: Requirements 1.1, 1.2
+     */
+    @Test
+    fun instagramWithSystemFlagShouldBeExcluded() {
+        val result = shouldIncludeApp(
+            launchIntent = Intent(Intent.ACTION_MAIN),
+            flags = ApplicationInfo.FLAG_SYSTEM,
+            packageName = "com.instagram.android",
+        )
+        assertFalse("Instagram must be excluded when FLAG_SYSTEM is set", result)
+    }
+
+    /**
+     * Property 1: Instagram is always excluded.
+     *
+     * Feature: instagram-redirect-exclusion, Property 1:
+     * For any launchIntent and flags, shouldIncludeApp(..., "com.instagram.android") returns false.
+     *
+     * Validates: Requirements 1.1, 1.2
+     */
+    @Test
+    fun instagramExclusionHoldsForAllIntentAndFlagCombinations() {
+        val intents = listOf(
+            null,
+            Intent(Intent.ACTION_MAIN),
+            Intent(Intent.ACTION_VIEW),
+            Intent("com.example.custom"),
+        )
+        val flagCombinations = listOf(
+            0,
+            ApplicationInfo.FLAG_SYSTEM,
+            ApplicationInfo.FLAG_UPDATED_SYSTEM_APP,
+            ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP,
+            0x00000040,  // arbitrary other flag
+        )
+
+        for ((intentIndex, intent) in intents.withIndex()) {
+            for (flags in flagCombinations) {
+                assertFalse(
+                    "shouldIncludeApp(intentIndex=$intentIndex, flags=0x${flags.toString(16)}, " +
+                        "packageName=\"com.instagram.android\") must return false",
+                    shouldIncludeApp(
+                        launchIntent = intent,
+                        flags = flags,
+                        packageName = "com.instagram.android",
+                    ),
+                )
+            }
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -206,7 +295,7 @@ class SettingsScreenLoadAppsTest {
             assertTrue(
                 "shouldIncludeApp(intent, 0) must return true for any non-null intent " +
                     "with flags=0. Failed for action='$label'",
-                shouldIncludeApp(launchIntent = intent, flags = 0),
+                shouldIncludeApp(launchIntent = intent, flags = 0, packageName = "com.example.app"),
             )
         }
     }
@@ -232,12 +321,12 @@ class SettingsScreenLoadAppsTest {
             assertFalse(
                 "shouldIncludeApp(nonNullIntent, flags=0x${flags.toString(16)}) must return false " +
                     "when FLAG_SYSTEM is set.",
-                shouldIncludeApp(launchIntent = nonNullIntent, flags = flags),
+                shouldIncludeApp(launchIntent = nonNullIntent, flags = flags, packageName = "com.example.app"),
             )
             assertFalse(
                 "shouldIncludeApp(null, flags=0x${flags.toString(16)}) must return false " +
                     "when FLAG_SYSTEM is set.",
-                shouldIncludeApp(launchIntent = null, flags = flags),
+                shouldIncludeApp(launchIntent = null, flags = flags, packageName = "com.example.app"),
             )
         }
     }
@@ -260,12 +349,12 @@ class SettingsScreenLoadAppsTest {
             assertFalse(
                 "shouldIncludeApp(nonNullIntent, flags=0x${flags.toString(16)}) must return false " +
                     "when FLAG_UPDATED_SYSTEM_APP is set.",
-                shouldIncludeApp(launchIntent = nonNullIntent, flags = flags),
+                shouldIncludeApp(launchIntent = nonNullIntent, flags = flags, packageName = "com.example.app"),
             )
             assertFalse(
                 "shouldIncludeApp(null, flags=0x${flags.toString(16)}) must return false " +
                     "when FLAG_UPDATED_SYSTEM_APP is set.",
-                shouldIncludeApp(launchIntent = null, flags = flags),
+                shouldIncludeApp(launchIntent = null, flags = flags, packageName = "com.example.app"),
             )
         }
     }
@@ -290,8 +379,8 @@ class SettingsScreenLoadAppsTest {
         fakeRepo.setRedirectApps(setOf(packageName))
 
         // Verify the package is selected regardless of what shouldIncludeApp returns
-        val includedByFilter = shouldIncludeApp(launchIntent = Intent(Intent.ACTION_MAIN), flags = 0)
-        val excludedByFilter = shouldIncludeApp(launchIntent = null, flags = ApplicationInfo.FLAG_SYSTEM)
+        val includedByFilter = shouldIncludeApp(launchIntent = Intent(Intent.ACTION_MAIN), flags = 0, packageName = "com.example.app")
+        val excludedByFilter = shouldIncludeApp(launchIntent = null, flags = ApplicationInfo.FLAG_SYSTEM, packageName = "com.example.app")
 
         assertTrue("shouldIncludeApp with flags=0 should return true", includedByFilter)
         assertFalse("shouldIncludeApp with FLAG_SYSTEM should return false", excludedByFilter)
@@ -308,6 +397,57 @@ class SettingsScreenLoadAppsTest {
             setOf(packageName),
             fakeRepo.getRedirectApps(),
         )
+    }
+
+    /**
+     * Property 2: Existing filter behavior is preserved for non-Instagram apps.
+     *
+     * Feature: instagram-redirect-exclusion, Property 2:
+     * For any non-Instagram package name, the result equals the two-parameter predecessor's result.
+     *
+     * Validates: Requirements 2.1, 2.2, 2.3, 2.4
+     */
+    @Test
+    fun existingFilterBehaviorPreservedForNonInstagramApps() {
+        val nonInstagramPackages = listOf(
+            "com.example.app",
+            "com.spotify.music",
+            "com.duolingo",
+            "org.mozilla.firefox",
+            "com.google.android.youtube",
+        )
+        val nonNullIntent = Intent(Intent.ACTION_MAIN)
+
+        for (pkg in nonInstagramPackages) {
+            // null intent → false (guard 1)
+            assertFalse(
+                "shouldIncludeApp(null, 0, $pkg) must return false",
+                shouldIncludeApp(launchIntent = null, flags = 0, packageName = pkg),
+            )
+            // FLAG_SYSTEM → false (guard 2)
+            assertFalse(
+                "shouldIncludeApp(intent, FLAG_SYSTEM, $pkg) must return false",
+                shouldIncludeApp(
+                    launchIntent = nonNullIntent,
+                    flags = ApplicationInfo.FLAG_SYSTEM,
+                    packageName = pkg,
+                ),
+            )
+            // FLAG_UPDATED_SYSTEM_APP → false (guard 3)
+            assertFalse(
+                "shouldIncludeApp(intent, FLAG_UPDATED_SYSTEM_APP, $pkg) must return false",
+                shouldIncludeApp(
+                    launchIntent = nonNullIntent,
+                    flags = ApplicationInfo.FLAG_UPDATED_SYSTEM_APP,
+                    packageName = pkg,
+                ),
+            )
+            // non-null intent, flags=0 → true (happy path)
+            assertTrue(
+                "shouldIncludeApp(intent, 0, $pkg) must return true",
+                shouldIncludeApp(launchIntent = nonNullIntent, flags = 0, packageName = pkg),
+            )
+        }
     }
 
     /**

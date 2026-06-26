@@ -197,16 +197,25 @@ private data class AppEntry(
  * An app is included only when:
  * 1. It has a launcher intent (i.e. it is user-launchable), AND
  * 2. It is not a system app ([ApplicationInfo.FLAG_SYSTEM] is not set), AND
- * 3. It is not an updated system app ([ApplicationInfo.FLAG_UPDATED_SYSTEM_APP] is not set).
+ * 3. It is not an updated system app ([ApplicationInfo.FLAG_UPDATED_SYSTEM_APP] is not set), AND
+ * 4. Its package name is not `com.instagram.android` (Instagram is the monitored app and must
+ *    never appear as a redirect destination).
  *
  * @param launchIntent Result of [PackageManager.getLaunchIntentForPackage]; `null` means the
  *                     app has no launcher activity and should be excluded.
  * @param flags        [ApplicationInfo.flags] for the app.
+ * @param packageName  [ApplicationInfo.packageName] for the app; used to exclude explicitly
+ *                     blocked packages such as `com.instagram.android`.
  */
-internal fun shouldIncludeApp(launchIntent: android.content.Intent?, flags: Int): Boolean {
+internal fun shouldIncludeApp(
+    launchIntent: android.content.Intent?,
+    flags: Int,
+    packageName: String,
+): Boolean {
     if (launchIntent == null) return false
     if (flags and ApplicationInfo.FLAG_SYSTEM != 0) return false
     if (flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP != 0) return false
+    if (packageName == "com.instagram.android") return false
     return true
 }
 
@@ -223,7 +232,7 @@ private fun loadInstalledApps(pm: PackageManager): List<AppEntry> {
     return apps
         .filter { info ->
             val launchIntent = pm.getLaunchIntentForPackage(info.packageName)
-            shouldIncludeApp(launchIntent, info.flags)
+            shouldIncludeApp(launchIntent, info.flags, info.packageName)
         }
         .map { info ->
             AppEntry(
